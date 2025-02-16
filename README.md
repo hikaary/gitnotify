@@ -51,8 +51,6 @@ uv sync
 url = "https://gitlab.com"
 token = "YOUR_GITLAB_TOKEN"
 poll_interval = 5
-# Пустой список проектов означает, что список будет получен автоматически через API
-projects = []
 
 [telegram]
 token = "YOUR_TELEGRAM_BOT_TOKEN"
