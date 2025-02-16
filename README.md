@@ -39,7 +39,7 @@ GitNotify – это система мониторинга событий GitLab
 
 Установка зависимостей производится через утилиту **uv**:
 ```bash
-uv add aiohttp aiogram tomllib
+uv sync
 ```
 
 Конфигурация
@@ -106,13 +106,13 @@ repo_mapping = { "@mention" = ["project_1", "project_2", "project_3"], "mention_
    Запустите скрипт для проверки статусов пайплайнов:
 
 ```bash
-python3 gitlab_monitor.py
+python gitlab_monitor.py
 ```
 
 2. **Telegram-бот**  
    Запустите Telegram-бот:
 ```bash
-python3 telegram_bot.py
+python telegram_bot.py
 ```
 
 При запуске оба процесса будут работать асинхронно, опрашивая GitLab и отправляя уведомления по событиям.
