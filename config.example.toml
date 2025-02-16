@@ -6,6 +6,7 @@ poll_interval = 1
 [telegram]
 token = ""
 default_chat = 123
+message_thread_id = 0
 message_template = """
 <b>{event_type}</b>
 Пользователь: {user}

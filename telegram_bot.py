@@ -159,7 +159,10 @@ async def telegram_notification_callback(
         text = f'Ошибка формирования сообщения: отсутствует ключ {e}'
     try:
         await bot.send_message(
-            telegram_conf.get('default_chat'), text, parse_mode=ParseMode.HTML
+            telegram_conf.get('default_chat'),
+            text,
+            parse_mode=ParseMode.HTML,
+            message_thread_id=telegram_conf.get('message_thread_id'),
         )
     except Exception as e:
         logging.error(f'Ошибка отправки уведомления в Telegram: {e}')
