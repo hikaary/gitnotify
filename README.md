@@ -107,15 +107,14 @@ repo_mapping = {
 1. **GitLab мониторинг**  
    Запустите скрипт для проверки статусов пайплайнов:
 
-
 ```bash
-    python3 gitlab_monitor.py
+python3 gitlab_monitor.py
 ```
 
 2. **Telegram-бот**  
    Запустите Telegram-бот:
 ```bash
-    python3 telegram_bot.py
+python3 telegram_bot.py
 ```
 
 При запуске оба процесса будут работать асинхронно, опрашивая GitLab и отправляя уведомления по событиям.
