@@ -1,0 +1,14 @@
+FROM python:3.12.4-slim
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+	PYTHONUNBUFFERED=1
+
+WORKDIR /app
+COPY . .
+
+RUN uv sync --frozen
+
+ENV PATH="/app/.venv/bin:$PATH"
+
+CMD ["python", "telegram_bot.py"]
