@@ -72,8 +72,9 @@ async def telegram_notification_callback(
     project_name = event.get('project_name', f'Проект {project_id}')
     repo_mapping = telegram_conf.get('repo_mapping', {})
     ping = ''
-    if project_name in repo_mapping:
-        ping = repo_mapping[project_name]
+    for mention, projects in repo_mapping:
+        if project_name in projects:
+            ping += mention
 
     event_type = event.get('type')
     if event_type == 'pipeline':

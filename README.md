@@ -94,9 +94,7 @@ mr_template = """
 {ping}
 """
 
-repo_mapping = {
-  "project_123456": "@telegram_nick1",
-  "project_789012": "@telegram_nick2"
+repo_mapping = { "@mention" = ["project_1", "project_2", "project_3"], "mention_2" = ["project_1"] }
 }
 ```
 
