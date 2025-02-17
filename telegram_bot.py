@@ -24,6 +24,7 @@ repo_mapping, уведомление будет дополнительно со�
 import asyncio
 import logging
 import sys
+from typing import Any
 
 import tomllib
 from aiogram import Bot, Dispatcher
@@ -31,11 +32,12 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
 from gitlab import events
+from gitlab.api import GitlabConfig
 
-CONFIG_FILE = 'config.toml'
+CONFIG_FILE: str = 'config.toml'
 
 
-async def load_config():
+async def load_config() -> dict[str, Any]:
     """
     Загружает конфигурацию из TOML файла.
 
@@ -50,41 +52,38 @@ async def load_config():
 
 
 async def telegram_notification_callback(
-    event,
-    bot,
-    telegram_conf,
-    gitlab_conf,
-):
+    event: events.Event,
+    bot: Bot,
+    telegram_conf: dict[str, Any],
+    gitlab_conf: GitlabConfig,
+) -> None:
     """
     Callback для отправки уведомлений в Telegram. Формирует уведомление,
     используя шаблоны из конфигурации, и дополнительно отправляет пинг, если для
     проекта задан соответствующий тег в repo_mapping.
-
-    Для уведомлений используется название репозитория (project_name).
 
     :param event: Словарь с данными события.
     :param bot: Экземпляр Telegram-бота.
     :param telegram_conf: Секция конфигурации [telegram] из config.toml.
     :param gitlab_conf: Секция конфигурации [gitlab] из config.toml.
     """
-    base_url = gitlab_conf.get('url', 'https://gitlab.com')
-    project_id = event.get('project_id')
-    project_name = event.get('project_name', f'Проект {project_id}')
-    repo_mapping = telegram_conf.get('repo_mapping', {})
+    base_url = gitlab_conf['url']
+    project_id: Any = event.get('project_id')
+    project_name: str = event.get('project_name', f'Проект {project_id}')
+    repo_mapping: dict[str, Any] = telegram_conf.get('repo_mapping', {})
     ping = ''
     for mention, projects in repo_mapping.items():
         if project_name in projects:
             ping += f'{mention} '
 
-    event_type = event.get('type')
+    event_type = event['type']
     if event_type == 'pipeline':
-        status = event.get('status')
+        status = event.get('status', '')
+        description = f'Новый статус: {status}'
         if status == 'success':
             description = 'Пайплайн завершён успешно.'
         elif status == 'failed':
             description = 'Пайплайн завершился с ошибкой.'
-        else:
-            description = f'Новый статус: {status}'
         template = telegram_conf.get('pipeline_template')
         if not template:
             template = (
@@ -102,8 +101,8 @@ async def telegram_notification_callback(
             'base_url': base_url,
         }
     elif event_type == 'push':
-        branch = event.get('branch')
-        commit_count = event.get('commit_count')
+        branch = event.get('branch', '')
+        commit_count = event.get('commit_count', 0)
         author = event.get('author', 'GitLab')
         template = telegram_conf.get('push_template')
         if not template:
@@ -124,7 +123,7 @@ async def telegram_notification_callback(
             'base_url': base_url,
         }
     elif event_type == 'merge_request':
-        state = event.get('state')
+        state = event.get('state', '')
         title_mr = event.get('title', 'Merge Request')
         iid = event.get('iid')
         author = event.get('author', 'GitLab')
@@ -155,12 +154,12 @@ async def telegram_notification_callback(
 
     data['ping'] = ping
     try:
-        text = template.format(**data)
+        text: str = template.format(**data)
     except KeyError as e:
         text = f'Ошибка формирования сообщения: отсутствует ключ {e}'
     try:
         await bot.send_message(
-            telegram_conf.get('default_chat'),
+            telegram_conf.get('default_chat', ''),
             text,
             parse_mode=ParseMode.HTML,
             message_thread_id=telegram_conf.get('message_thread_id'),
@@ -169,12 +168,16 @@ async def telegram_notification_callback(
         logging.error(f'Ошибка отправки уведомления в Telegram: {e}')
 
 
-async def start_polling(bot, telegram_conf, gitlab_conf):
+async def start_polling(
+    bot: Bot,
+    telegram_conf: dict[str, Any],
+    gitlab_conf: GitlabConfig,
+) -> None:
     """
     Запускает фоновые задачи для опроса событий GitLab и отправки уведомлений в Telegram.
     """
 
-    async def callback(event):
+    async def callback(event: events.Event) -> None:
         await telegram_notification_callback(
             event,
             bot,
@@ -189,22 +192,22 @@ async def start_polling(bot, telegram_conf, gitlab_conf):
     )
 
 
-async def main():
+async def main() -> None:
     logging.basicConfig(level=logging.INFO)
-    config = await load_config()
-    telegram_conf = config.get('telegram', {})
-    gitlab_conf = config.get('gitlab', {})
+    config: dict[str, Any] = await load_config()
+    telegram_conf: dict[str, Any] = config.get('telegram', {})
+    gitlab_conf: GitlabConfig = config.get('gitlab', {})
 
-    bot_token = telegram_conf.get('token')
+    bot_token: str | None = telegram_conf.get('token')
     if not bot_token:
         print('Токен Telegram не задан в конфигурации.', file=sys.stderr)
         sys.exit(1)
 
-    bot = Bot(
+    bot: Bot = Bot(
         token=bot_token,
         default_bot_properties=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
-    dp = Dispatcher()
+    dp: Dispatcher = Dispatcher()
     asyncio.create_task(start_polling(bot, telegram_conf, gitlab_conf))
     await dp.start_polling(bot)
 
